@@ -268,6 +268,45 @@ int main( int argc, char** argv )
     return 0;
 }
 
+extern "C" {
+
+void loadFile(std::string path) {
+
+    try
+    {
+        auto f = std::shared_ptr<tracy::FileRead>( tracy::FileRead::Open( path.data() ) );
+        if( f )
+        {
+            loadThread = std::thread( [f] {
+                try
+                {
+                    view = std::make_unique<tracy::View>( RunOnMainThread, *f, s_fixedWidth, s_smallFont, s_bigFont, SetWindowTitleCallback, SetupScaleCallback, AttentionCallback );
+                }
+                catch( const tracy::UnsupportedVersion& e )
+                {
+                    badVer.state = tracy::BadVersionState::UnsupportedVersion;
+                    badVer.version = e.version;
+                }
+                catch( const tracy::LegacyVersion& e )
+                {
+                    badVer.state = tracy::BadVersionState::LegacyVersion;
+                    badVer.version = e.version;
+                }
+            } );
+        }
+    }
+    catch( const tracy::NotTracyDump& )
+    {
+        badVer.state = tracy::BadVersionState::BadFile;
+    }
+    catch( const tracy::FileReadError& )
+    {
+        badVer.state = tracy::BadVersionState::ReadError;
+    }
+}
+
+}
+
 static void DrawContents()
 {
     static bool reconnect = false;

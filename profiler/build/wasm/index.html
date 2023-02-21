@@ -84,6 +84,9 @@
     </div>
 
     <script type='text/javascript'>
+      let readyResolve;
+      const initPromise = new Promise((resolve) => {readyResolve = resolve;})
+
       var statusElement = document.getElementById('status');
       var progressElement = document.getElementById('progress');
       var spinnerElement = document.getElementById('spinner');
@@ -99,6 +102,44 @@
         Module.canvas.style.height = h + 'px';
       }
 
+      async function tryOpenFromUrlParams() {
+        // Fetch trace from ?trace=[file.tracy] URL query parameter.
+        const searchParams = new URLSearchParams(window.location.search);
+
+        if (searchParams.has('trace')) {
+          const traceUrl = searchParams.get('trace');
+
+          const request = new Request(traceUrl);
+          const response = await fetch(request);
+          if (!response.ok) {
+            throw new Error(
+                'Fetch error ' + response.status + ': ' + response.statusText);
+          }
+
+          // TODO: stream from response.body -> FS.write() instead of loading
+          //       entirely into an ArrayBuffer
+          const traceArrayBuffer = await response.arrayBuffer();
+          await initPromise;
+
+          const fileNameParts = traceUrl.split('/');
+          const fileName = fileNameParts[fileNameParts.length - 1];
+
+          const view = new Uint8Array(traceArrayBuffer);
+          FS.writeFile(fileName, view);
+
+          // TODO: delete/unmap the file after loading (callback JS->C->JS?)
+          Module.ccall('loadFile', null, ['string'], [fileName]);
+        }
+
+        // TODO: fetch second trace from ?compare=[file2.tracy]
+      }
+
+      window.addEventListener('load', () => {
+        tryOpenFromUrlParams().catch((error) => {
+          console.error('Error loading trace from URL:\n' + error);
+        });
+      });
+
       var Module = {
         preRun: [],
         postRun: [],
@@ -108,6 +149,9 @@
             console.log(text);
           };
         })(),
+        printErr: function(text) {
+          console.error('(C)', text);
+        },
         canvas: (function() {
           var canvas = document.getElementById('canvas');
 
@@ -147,7 +191,10 @@
         monitorRunDependencies: function(left) {
           this.totalDependencies = Math.max(this.totalDependencies, left);
           Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
-        }
+        },
+        onRuntimeInitialized: function() {
+          readyResolve();
+        },
       };
       Module.setStatus('Downloading...');
       window.onerror = function(event) {
@@ -162,5 +209,6 @@
       resizeHandler();
     </script>
     <script async type="text/javascript" src="Tracy-release.js"></script>
+    <!-- <script async type="text/javascript" src="Tracy-debug.js"></script> -->
   </body>
 </html>

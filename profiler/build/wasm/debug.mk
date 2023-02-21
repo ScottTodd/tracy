@@ -1,4 +1,4 @@
-CFLAGS := -g3 -gsource-map -Wall
+CFLAGS := -g3 -gseparate-dwarf -Wall
 DEFINES := -DDEBUG
 BUILD := debug
 LIBS := -sDEMANGLE_SUPPORT=1
