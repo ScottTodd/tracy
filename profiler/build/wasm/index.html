@@ -99,6 +99,47 @@
         Module.canvas.style.height = h + 'px';
       }
 
+      function fetchTrace(traceUrl) {
+        return new Promise((resolve, reject) => {
+          console.log('fetching trace from URL: "%s"', traceUrl);
+          const xhr = new XMLHttpRequest();
+          xhr.onload = function(progressEvent) {
+            if (this.status >= 200 && this.status < 300) {
+              resolve(progressEvent.target.response);
+            } else {
+              reject({status: this.status, statusText: xhr.statusText});
+            }
+          };
+          xhr.onerror = function() {
+            reject({status: this.status, statusText: xhr.statusText});
+          }
+          xhr.open('GET', traceUrl);
+          xhr.responseType = 'arraybuffer';
+          xhr.send();
+        });
+      }
+
+      async function tryOpenFromUrlParams() {
+        // Fetch trace from ?trace=[file.tracy] URL query parameter.
+        const searchParams = new URLSearchParams(window.location.search);
+
+        if (searchParams.has("trace")) {
+          const traceUrl = searchParams.get("trace");
+          const traceArrayBuffer = await fetchTrace(traceUrl);
+
+          console.log('finished loading trace:', traceArrayBuffer);
+
+          // Set name to what is hopefully the file component of the path.
+          // finishLoadingTrace(trace, tracePath.split("/").pop());
+        }
+      }
+
+      window.addEventListener("load", () => {
+        tryOpenFromUrlParams().catch((error) => {
+          console.error("Error loading trace from URL: '" + error + "'");
+        });
+      });
+
       var Module = {
         preRun: [],
         postRun: [],
