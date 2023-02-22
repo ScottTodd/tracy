@@ -13,7 +13,7 @@ DEFINES += -DIMGUI_ENABLE_FREETYPE -DIMGUI_IMPL_OPENGL_ES2
 INCLUDES := -I../../../imgui -I/usr/local/google/home/scotttodd/code/emsdk/upstream/emscripten/cache/sysroot/include/capstone/
 # LIBS += -lpthread -ldl /usr/local/google/home/scotttodd/code/emsdk/upstream/emscripten/cache/sysroot/lib/libcapstone.a -sUSE_GLFW=3 -sINITIAL_MEMORY=384mb -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=4gb -sWASM_BIGINT=1 -sPTHREAD_POOL_SIZE=4 -sEXPORTED_FUNCTIONS=_main,_nativeResize,_nativeOpenFile -sEXPORTED_RUNTIME_METHODS=ccall -sENVIRONMENT=web,worker --preload-file embed.tracy
 # LIBS += -lpthread -ldl /usr/local/google/home/scotttodd/code/emsdk/upstream/emscripten/cache/sysroot/lib/libcapstone.a -sUSE_GLFW=3 -sINITIAL_MEMORY=384mb -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=4gb -sWASM_BIGINT=1 -sPTHREAD_POOL_SIZE=4 -sEXPORTED_FUNCTIONS=_main,_nativeResize,_nativeOpenFile -sEXPORTED_RUNTIME_METHODS=ccall -sENVIRONMENT=web,worker
-LIBS += -lpthread -ldl /usr/local/google/home/scotttodd/code/emsdk/upstream/emscripten/cache/sysroot/lib/libcapstone.a -sUSE_GLFW=3 -sINITIAL_MEMORY=384mb -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=4gb -sWASM_BIGINT=1 -sPTHREAD_POOL_SIZE=4 -sEXPORTED_FUNCTIONS=_main,_nativeResize,_nativeOpenFile,_int_sqrt -sEXPORTED_RUNTIME_METHODS=ccall -sENVIRONMENT=web,worker
+LIBS += -lpthread -ldl /usr/local/google/home/scotttodd/code/emsdk/upstream/emscripten/cache/sysroot/lib/libcapstone.a -sUSE_GLFW=3 -sINITIAL_MEMORY=384mb -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=4gb -sWASM_BIGINT=1 -sPTHREAD_POOL_SIZE=4 -sEXPORTED_FUNCTIONS=_main,_nativeResize,_nativeOpenFile,_loadFile -sEXPORTED_RUNTIME_METHODS=ccall -sENVIRONMENT=web,worker -sNO_DISABLE_EXCEPTION_CATCHING
 
 PROJECT := Tracy
 IMAGE := $(PROJECT)-$(BUILD).html

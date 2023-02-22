@@ -84,6 +84,9 @@
     </div>
 
     <script type='text/javascript'>
+      let readyResolve;
+      const initPromise = new Promise((resolve) => {readyResolve = resolve;})
+
       var statusElement = document.getElementById('status');
       var progressElement = document.getElementById('progress');
       var spinnerElement = document.getElementById('spinner');
@@ -116,8 +119,17 @@
           const traceArrayBuffer = await response.arrayBuffer();
           console.log('finished loading trace:', traceArrayBuffer);
 
-          // Set name to what is hopefully the file component of the path.
-          // finishLoadingTrace(trace, tracePath.split('/').pop());
+          await initPromise;
+          console.log('initialized');
+
+          // TODO: stream from response.body -> FS.write()
+          // TODO: pick a file name from the URL (last component?)
+          // const fileNameSegments = new URL(traceUrl).pathname.split('');
+          // const fileName = fileNameSegments.pop();
+          const fileName = 'file.tracy';
+          FS.writeFile(fileName, new DataView(traceArrayBuffer));
+
+          Module.ccall('loadFile', null, ['string'], [fileName]);
         }
       }
 
@@ -136,6 +148,9 @@
             console.log(text);
           };
         })(),
+        printErr: function(text) {
+          console.error('(C)', text);
+        },
         canvas: (function() {
           var canvas = document.getElementById('canvas');
 
@@ -177,8 +192,7 @@
           Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
         },
         onRuntimeInitialized: function() {
-          const result = Module.ccall('int_sqrt', 'number', ['number'], [28]);
-          console.log("sqrt(28) ==", result);
+          readyResolve();
         },
       };
       Module.setStatus('Downloading...');
@@ -193,6 +207,6 @@
       addEventListener('resize', resizeHandler);
       resizeHandler();
     </script>
-    <script async type="text/javascript" src="Tracy-release.js"></script>
+    <script async type="text/javascript" src="Tracy-debug.js"></script>
   </body>
 </html>

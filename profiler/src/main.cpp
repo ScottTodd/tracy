@@ -270,8 +270,57 @@ int main( int argc, char** argv )
 
 extern "C" {
 
-int int_sqrt(int x) {
-  return sqrt(x);
+void loadFile(std::string path) {
+
+    // auto f = std::shared_ptr<tracy::FileRead>( tracy::FileRead::Open( fn ) );
+    // if( f )
+    // {
+    // loadThread = std::thread( [f] {
+    //     try
+    //     {
+    //         view = std::make_unique<tracy::View>( RunOnMainThread, *f, s_fixedWidth, s_smallFont, s_bigFont, SetWindowTitleCallback, SetupScaleCallback, AttentionCallback );
+
+
+    try
+    {
+        // TODO: debug `tracy::NotTracyDump:` in tracy::FileRead::Open
+        //       (debugger -> open via file picker, check values
+        //        then compare with open via fetch/FS.writeFile)
+        auto f = std::shared_ptr<tracy::FileRead>( tracy::FileRead::Open( path.data() ) );
+        if( f )
+        {
+            fprintf( stderr, "tracy::FileRead created\n");
+            loadThread = std::thread( [f] {
+                try
+                {
+                    fprintf( stderr, "creating tracy::View\n");
+                    view = std::make_unique<tracy::View>( RunOnMainThread, *f, s_fixedWidth, s_smallFont, s_bigFont, SetWindowTitleCallback, SetupScaleCallback, AttentionCallback );
+                }
+                catch( const tracy::UnsupportedVersion& e )
+                {
+                    fprintf( stderr, "unsupported version\n");
+                    badVer.state = tracy::BadVersionState::UnsupportedVersion;
+                    badVer.version = e.version;
+                }
+                catch( const tracy::LegacyVersion& e )
+                {
+                    fprintf( stderr, "legacy version\n");
+                    badVer.state = tracy::BadVersionState::LegacyVersion;
+                    badVer.version = e.version;
+                }
+            } );
+        } else {
+            fprintf( stderr, "tracy::FileRead FAILED\n");
+        }
+    }
+    catch( const tracy::NotTracyDump& )
+    {
+        badVer.state = tracy::BadVersionState::BadFile;
+    }
+    catch( const tracy::FileReadError& )
+    {
+        badVer.state = tracy::BadVersionState::ReadError;
+    }
 }
 
 }
