@@ -147,7 +147,11 @@
         monitorRunDependencies: function(left) {
           this.totalDependencies = Math.max(this.totalDependencies, left);
           Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
-        }
+        },
+        onRuntimeInitialized: function() {
+          const result = Module.ccall('int_sqrt', 'number', ['number'], [28]);
+          console.log("sqrt(28) ==", result);
+        },
       };
       Module.setStatus('Downloading...');
       window.onerror = function(event) {

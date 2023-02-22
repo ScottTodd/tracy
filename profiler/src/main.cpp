@@ -268,6 +268,14 @@ int main( int argc, char** argv )
     return 0;
 }
 
+extern "C" {
+
+int int_sqrt(int x) {
+  return sqrt(x);
+}
+
+}
+
 static void DrawContents()
 {
     static bool reconnect = false;
