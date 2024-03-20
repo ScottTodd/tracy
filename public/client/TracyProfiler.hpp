@@ -10,6 +10,7 @@
 #include "tracy_concurrentqueue.h"
 #include "tracy_SPSCQueue.h"
 #include "TracyCallstack.hpp"
+#include "TracyGpuRocmSmi.hpp"
 #include "TracySysPower.hpp"
 #include "TracySysTime.hpp"
 #include "TracyFastVector.hpp"
@@ -977,6 +978,9 @@ private:
 #ifdef TRACY_HAS_SYSPOWER
     SysPower m_sysPower;
 #endif
+#  ifdef TRACY_HAS_GPU_ROCM_SMI
+    GpuRocmSmi m_gpuRocmSmi;
+#  endif
 
     ParameterCallback m_paramCallback;
     void* m_paramCallbackData;

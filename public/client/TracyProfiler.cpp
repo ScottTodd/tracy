@@ -1777,6 +1777,9 @@ void Profiler::Worker()
 #  ifdef TRACY_HAS_SYSPOWER
             m_sysPower.Tick();
 #  endif
+#  ifdef TRACY_HAS_GPU_ROCM_SMI
+            m_gpuRocmSmi.Tick();
+#  endif
 #endif
 
             if( m_broadcast )
@@ -1905,6 +1908,9 @@ void Profiler::Worker()
 #ifdef TRACY_HAS_SYSPOWER
             m_sysPower.Tick();
 #endif
+#  ifdef TRACY_HAS_GPU_ROCM_SMI
+            m_gpuRocmSmi.Tick();
+#  endif
             const auto status = Dequeue( token );
             const auto serialStatus = DequeueSerial();
             if( status == DequeueStatus::ConnectionLost || serialStatus == DequeueStatus::ConnectionLost )
