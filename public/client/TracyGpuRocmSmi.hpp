@@ -19,6 +19,7 @@ namespace tracy
 
 class GpuRocmSmi
 {
+    // TODO: generalize to "GpuDevice", track various values
     struct Metric
     {
         uint64_t value;

@@ -22,7 +22,8 @@ GpuRocmSmi::GpuRocmSmi()
 {
     // TODO: initialize
 
-    m_metrics[0].name = "ROCm test";
+    m_metrics[0].name = "GPU socket power";
+    m_metrics[0].value = 0;
 
     rsmi_status_t ret;
     uint32_t num_devices;
@@ -33,28 +34,40 @@ GpuRocmSmi::GpuRocmSmi()
 
     for (int i=0; i < num_devices; ++i) {
         ret = rsmi_dev_id_get(i, &dev_id);
-        fprintf(stdout, "got device id: %d\n", (int)dev_id);
+        fprintf(stdout, "Got ROCm device id: %d\n", (int)dev_id);
 
-        constexpr size_t MAX_NAME_LEN = 2048;
-        char name[MAX_NAME_LEN];
-        ret = rsmi_dev_name_get(i, name, MAX_NAME_LEN);
-        name[MAX_NAME_LEN - 1] = '\0';
-        const char *status_string;
-        if (ret != RSMI_STATUS_SUCCESS) {
-            ret = rsmi_status_string(ret, &status_string);
-            fprintf(stderr, "Failed to get name of the GPU: %s", status_string);
-        }
-        fprintf(stdout, "got device name: '%s'\n", name);
+        // constexpr size_t MAX_NAME_LEN = 128;
+        // char name[MAX_NAME_LEN];
+        // ret = rsmi_dev_name_get(i, name, MAX_NAME_LEN);
+        // name[MAX_NAME_LEN - 1] = '\0';
+        // const char *status_string;
+        // if (ret != RSMI_STATUS_SUCCESS) {
+        //     ret = rsmi_status_string(ret, &status_string);
+        //     fprintf(stderr, "Failed to get name of the GPU: %s", status_string);
+        // }
+        // fprintf(stdout, "Got ROCm device name: '%s'\n", name);
+
+        uint64_t socket_power;
+        rsmi_status_t ret;
+        ret = rsmi_dev_current_socket_power_get(0, &socket_power);
+        fprintf(stdout, "socket power: %d\n", (int)socket_power);
     }
-    ret = rsmi_shut_down();
+    // ret = rsmi_shut_down();
 }
 
 GpuRocmSmi::~GpuRocmSmi()
 {
+    // rsmi_status_t ret;
+
     for( auto& v : m_metrics )
     {
         // Do not release v.name, as it may be still needed
     }
+
+    fprintf(stdout, "destructor\n");
+
+    // Can't do much if shut down fails here.
+    (void)rsmi_shut_down();
 }
 
 void GpuRocmSmi::Tick()
@@ -64,9 +77,19 @@ void GpuRocmSmi::Tick()
     {
         m_lastTime = t;
 
+        // fprintf(stdout, "Tick()\n");
+
+        uint64_t socket_power;
+        rsmi_status_t ret;
+        ret = rsmi_dev_current_socket_power_get(0, &socket_power);
+        // fprintf(stdout, "  socket power: %d\n", (int)socket_power);
+        uint64_t delta;
+        delta = socket_power - m_metrics[0].value;
+        m_metrics[0].value = socket_power;
+
         TracyLfqPrepare( QueueType::SysPowerReport );
         MemWrite( &item->sysPower.time, Profiler::GetTime() );
-        MemWrite( &item->sysPower.delta, /*delta=*/10 );
+        MemWrite( &item->sysPower.delta, delta );
         MemWrite( &item->sysPower.name, (uint64_t)m_metrics[0].name );
         TracyLfqCommit;
     }
