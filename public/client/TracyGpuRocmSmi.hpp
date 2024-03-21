@@ -33,6 +33,9 @@ public:
     void Tick();
 
 private:
+    void SetupIntPlot(const char* name);
+    void PlotInt(const char* name, int64_t time, uint64_t value);
+
     bool m_initialized;
     uint64_t m_lastTime;
 
