@@ -25,10 +25,11 @@ void check_rsmi_status(rsmi_status_t status) {
 }
 
 GpuRocmSmi::GpuRocmSmi()
-    : m_metrics( 1 )
+    : m_initialized ( false )
+    , m_metrics( 1 )
     , m_lastTime( 0 )
 {
-    m_metrics[0].name = "GPU socket power";
+    m_metrics[0].name = "GPU socket power (Watts)";
     // m_metrics[0].value = 0;
 
     rsmi_status_t ret;
@@ -62,14 +63,6 @@ GpuRocmSmi::GpuRocmSmi()
     }
     // ret = rsmi_shut_down();
 
-    //m_metrics[0].name
-    TracyLfqPrepare( QueueType::PlotConfig );
-    MemWrite( &item->plotConfig.name, (uint64_t)name );
-    MemWrite( &item->plotConfig.type, (uint8_t)PlotFormatType::Number );
-    MemWrite( &item->plotConfig.step, (uint8_t)false );
-    MemWrite( &item->plotConfig.fill, (uint8_t)true );
-    MemWrite( &item->plotConfig.color, 0 );
-    TracyLfqCommit;
 }
 
 GpuRocmSmi::~GpuRocmSmi()
@@ -89,6 +82,18 @@ GpuRocmSmi::~GpuRocmSmi()
 
 void GpuRocmSmi::Tick()
 {
+    if (!m_initialized) {
+        TracyLfqPrepare( QueueType::PlotConfig );
+        MemWrite( &item->plotConfig.name, (uint64_t)m_metrics[0].name );
+        MemWrite( &item->plotConfig.type, (uint8_t)PlotFormatType::Number );
+        MemWrite( &item->plotConfig.step, (uint8_t)false );
+        MemWrite( &item->plotConfig.fill, (uint8_t)true );
+        MemWrite( &item->plotConfig.color, 0 );
+        TracyLfqCommit;
+
+        m_initialized = true;
+    }
+
     auto t = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     if( t - m_lastTime > 10000000 )    // 10 ms
     {

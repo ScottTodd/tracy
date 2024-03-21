@@ -33,6 +33,7 @@ public:
     void Tick();
 
 private:
+    bool m_initialized;
     FastVector<Metric> m_metrics;
     uint64_t m_lastTime;
 };
