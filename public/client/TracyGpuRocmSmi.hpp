@@ -33,7 +33,7 @@ public:
     void Tick();
 
 private:
-    void SetupIntPlot(const char* name);
+    void SetupPlot(const char* name, PlotFormatType formatType);
     void PlotInt(const char* name, int64_t time, uint64_t value);
 
     bool m_initialized;
@@ -41,6 +41,7 @@ private:
 
     // FastVector<Metric> m_metrics;
     const char* m_nameSocketPower = "GPU socket power (Watts)";
+    const char* m_nameDeviceBusyPercent = "GPU device busy percentage";
     const char* m_nameUtilizationGFX = "GPU utilization (GFX)";
     const char* m_nameUtilizationMEM = "GPU utilization (MEM)";
 };

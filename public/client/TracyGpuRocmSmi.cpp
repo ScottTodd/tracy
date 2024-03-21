@@ -80,9 +80,10 @@ GpuRocmSmi::~GpuRocmSmi()
 void GpuRocmSmi::Tick()
 {
     if (!m_initialized) {
-        SetupIntPlot(m_nameSocketPower);
-        SetupIntPlot(m_nameUtilizationGFX);
-        SetupIntPlot(m_nameUtilizationMEM);
+        SetupPlot( m_nameSocketPower, PlotFormatType::Number );
+        SetupPlot( m_nameDeviceBusyPercent, PlotFormatType::Percentage );
+        SetupPlot( m_nameUtilizationGFX, PlotFormatType::Number );
+        SetupPlot( m_nameUtilizationMEM, PlotFormatType::Number );
         m_initialized = true;
     }
 
@@ -99,27 +100,32 @@ void GpuRocmSmi::Tick()
 
         // GPU socket power plot.
         uint64_t socketPowerMicrowatts;
-        ret = rsmi_dev_current_socket_power_get(0, &socketPowerMicrowatts);
+        ret = rsmi_dev_current_socket_power_get( 0, &socketPowerMicrowatts );
         check_rsmi_status(ret);
         uint64_t socketPowerWatts = socketPowerMicrowatts / 1000000;
-        PlotInt(m_nameSocketPower, profilerTime, socketPowerWatts);
+        PlotInt( m_nameSocketPower, profilerTime, socketPowerWatts );
+
+        uint32_t busy_percent;
+        ret = rsmi_dev_busy_percent_get( 0, &busy_percent )	;
+        check_rsmi_status(ret);
+        PlotInt( m_nameDeviceBusyPercent, profilerTime, busy_percent );
 
         // GPU utilization plots.
         uint64_t timestamp;
         rsmi_utilization_counter_t utilizationCounters[2];
         utilizationCounters[0].type = RSMI_COARSE_GRAIN_GFX_ACTIVITY;
         utilizationCounters[1].type = RSMI_COARSE_GRAIN_MEM_ACTIVITY;
-        ret = rsmi_utilization_count_get(0, utilizationCounters, 2, &timestamp);
+        ret = rsmi_utilization_count_get( 0, utilizationCounters, 2, &timestamp );
         check_rsmi_status(ret);
-        PlotInt(m_nameUtilizationGFX, profilerTime, utilizationCounters[0].value);
-        PlotInt(m_nameUtilizationMEM, profilerTime, utilizationCounters[1].value);
+        PlotInt( m_nameUtilizationGFX, profilerTime, utilizationCounters[0].value );
+        PlotInt( m_nameUtilizationMEM, profilerTime, utilizationCounters[1].value );
     }
 }
 
-void GpuRocmSmi::SetupIntPlot(const char* name) {
+void GpuRocmSmi::SetupPlot(const char* name, PlotFormatType formatType) {
     TracyLfqPrepare( QueueType::PlotConfig );
     MemWrite( &item->plotConfig.name, (uint64_t)name );
-    MemWrite( &item->plotConfig.type, (uint8_t)PlotFormatType::Number );
+    MemWrite( &item->plotConfig.type, (uint8_t)formatType );
     MemWrite( &item->plotConfig.step, (uint8_t)false );
     MemWrite( &item->plotConfig.fill, (uint8_t)true );
     MemWrite( &item->plotConfig.color, 0 );
