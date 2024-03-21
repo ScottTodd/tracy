@@ -16,6 +16,14 @@
 namespace tracy
 {
 
+void check_rsmi_status(rsmi_status_t status) {
+    const char *status_string;
+    if (status != RSMI_STATUS_SUCCESS) {
+        (void)rsmi_status_string(status, &status_string);
+        fprintf(stderr, "RSMI failure: '%s'\n", status_string);
+    }
+}
+
 GpuRocmSmi::GpuRocmSmi()
     : m_metrics( 1 )
     , m_lastTime( 0 )
@@ -34,6 +42,7 @@ GpuRocmSmi::GpuRocmSmi()
 
     for (int i=0; i < num_devices; ++i) {
         ret = rsmi_dev_id_get(i, &dev_id);
+        check_rsmi_status(ret);
         fprintf(stdout, "Got ROCm device id: %d\n", (int)dev_id);
 
         // constexpr size_t MAX_NAME_LEN = 128;
@@ -48,8 +57,9 @@ GpuRocmSmi::GpuRocmSmi()
         // fprintf(stdout, "Got ROCm device name: '%s'\n", name);
 
         uint64_t socket_power;
-        rsmi_status_t ret;
+        // rsmi_status_t ret;
         ret = rsmi_dev_current_socket_power_get(0, &socket_power);
+        check_rsmi_status(ret);
         fprintf(stdout, "socket power: %d\n", (int)socket_power);
     }
     // ret = rsmi_shut_down();
@@ -79,16 +89,40 @@ void GpuRocmSmi::Tick()
 
         // fprintf(stdout, "Tick()\n");
 
-        uint64_t socket_power;
-        rsmi_status_t ret;
-        ret = rsmi_dev_current_socket_power_get(0, &socket_power);
-        // fprintf(stdout, "  socket power: %d\n", (int)socket_power);
-        uint64_t delta;
-        delta = socket_power - m_metrics[0].value;
-        m_metrics[0].value = socket_power;
+        // Tracy Syspower
+        //   ev.delta is Microjoule
+        //   power is Watt = J / s
 
+
+        // Units: microwatts
+        uint64_t socket_power_microwatts;
+        rsmi_status_t ret;
+        ret = rsmi_dev_current_socket_power_get(0, &socket_power_microwatts);
+        check_rsmi_status(ret);
+        uint64_t socket_power_watts = socket_power_microwatts / 1000000;
+        // fprintf(stdout, "  socket power: %d\n", (int)socket_power);
+        // uint64_t delta;
+        // delta = socket_power_watts - m_metrics[0].value;
+        // m_metrics[0].value = socket_power_watts;
+        // fprintf(stdout, "socket power: %dW, delta: %dW\n", (int)socket_power_watts, (int)delta);
+        fprintf(stdout, "socket power: %dW\n", (int)socket_power_watts);
+
+        uint64_t socket_energy_microjoules;
+        float counter_resolution;
+        uint64_t timestamp;
+        ret = rsmi_dev_energy_count_get(0, &socket_energy_microjoules, &counter_resolution, &timestamp);
+        check_rsmi_status(ret);
+        uint64_t delta;
+        delta = socket_energy_microjoules - m_metrics[0].value;
+        m_metrics[0].value = socket_energy_microjoules;
+        fprintf(stdout, "socket energy: %" PRIu64 "uJ, delta: %" PRIu64 "uJ, resolution: %f, timestamp: %" PRIu64 "\n", socket_energy_microjoules, delta, counter_resolution, timestamp);
+
+        // TODO: rsmi_dev_power_cap_range_get()
+
+        // GPU:  28061126986666
+        // CPU:  21365180400
         TracyLfqPrepare( QueueType::SysPowerReport );
-        MemWrite( &item->sysPower.time, Profiler::GetTime() );
+        MemWrite( &item->sysPower.time, timestamp );
         MemWrite( &item->sysPower.delta, delta );
         MemWrite( &item->sysPower.name, (uint64_t)m_metrics[0].name );
         TracyLfqCommit;
