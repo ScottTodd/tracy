@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <rocm_smi/rocm_smi.h>
 
-#include "TracyFastVector.hpp"
+#include "../common/TracyQueue.hpp"
 
 namespace tracy
 {
@@ -41,6 +41,7 @@ private:
 
     // FastVector<Metric> m_metrics;
     const char* m_nameSocketPower = "GPU socket power (Watts)";
+    const char* m_nameDeviceMemoryUsage = "GPU memory usage (VRAM)";
     const char* m_nameDeviceBusyPercent = "GPU device busy percentage";
     const char* m_nameUtilizationGFX = "GPU utilization (GFX)";
     const char* m_nameUtilizationMEM = "GPU utilization (MEM)";

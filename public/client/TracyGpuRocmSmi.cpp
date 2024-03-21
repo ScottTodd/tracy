@@ -81,6 +81,7 @@ void GpuRocmSmi::Tick()
 {
     if (!m_initialized) {
         SetupPlot( m_nameSocketPower, PlotFormatType::Number );
+        SetupPlot( m_nameDeviceMemoryUsage, PlotFormatType::Memory );
         SetupPlot( m_nameDeviceBusyPercent, PlotFormatType::Percentage );
         SetupPlot( m_nameUtilizationGFX, PlotFormatType::Number );
         SetupPlot( m_nameUtilizationMEM, PlotFormatType::Number );
@@ -105,10 +106,17 @@ void GpuRocmSmi::Tick()
         uint64_t socketPowerWatts = socketPowerMicrowatts / 1000000;
         PlotInt( m_nameSocketPower, profilerTime, socketPowerWatts );
 
-        uint32_t busy_percent;
-        ret = rsmi_dev_busy_percent_get( 0, &busy_percent )	;
+        // Device memory usage plot.
+        uint64_t memoryUsed;
+        ret = rsmi_dev_memory_usage_get( 0, RSMI_MEM_TYPE_VRAM, &memoryUsed );
         check_rsmi_status(ret);
-        PlotInt( m_nameDeviceBusyPercent, profilerTime, busy_percent );
+        PlotInt( m_nameDeviceMemoryUsage, profilerTime, memoryUsed );
+
+        // Device busy percentage plot.
+        uint32_t busyPercent;
+        ret = rsmi_dev_busy_percent_get( 0, &busyPercent );
+        check_rsmi_status(ret);
+        PlotInt( m_nameDeviceBusyPercent, profilerTime, busyPercent );
 
         // GPU utilization plots.
         uint64_t timestamp;
