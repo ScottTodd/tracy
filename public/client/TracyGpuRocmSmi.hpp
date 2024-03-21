@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <rocm_smi/rocm_smi.h>
 
 #include "TracyFastVector.hpp"
 

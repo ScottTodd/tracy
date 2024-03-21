@@ -33,6 +33,21 @@ target_compile_features(TracyClient PUBLIC cxx_std_11)
 target_include_directories(TracyClient SYSTEM PUBLIC
     $<BUILD_INTERFACE:${TRACY_PUBLIC_DIR}>
     $<INSTALL_INTERFACE:include>)
+
+# DO NOT SUBMIT - make this optional (and test here, IREE has its own CMake for tracy_client)
+# https://rocm.docs.amd.com/en/latest/conceptual/cmake-packages.html
+# set(ROCM_ROOT "/opt/rocm")
+# set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH} ${ROCM_ROOT}/lib/cmake")
+# find_package(rocm_smi REQUIRED)
+target_include_directories(TracyClient SYSTEM PUBLIC
+    "/opt/rocm/include/"
+)
+target_link_libraries(
+    TracyClient
+    PUBLIC
+        "/opt/rocm/lib/librocm_smi64.so"
+)
+
 target_link_libraries(
     TracyClient
     PUBLIC
