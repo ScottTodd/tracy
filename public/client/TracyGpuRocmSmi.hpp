@@ -20,11 +20,11 @@ namespace tracy
 class GpuRocmSmi
 {
     // TODO: generalize to "GpuDevice", track various values
-    struct Metric
-    {
-        // uint64_t value;
-        const char* name;
-    };
+    // struct Metric
+    // {
+    //     // uint64_t value;
+    //     const char* name;
+    // };
 
 public:
     GpuRocmSmi();
@@ -34,8 +34,12 @@ public:
 
 private:
     bool m_initialized;
-    FastVector<Metric> m_metrics;
     uint64_t m_lastTime;
+
+    // FastVector<Metric> m_metrics;
+    const char* m_nameSocketPower = "GPU socket power (Watts)";
+    const char* m_nameUtilizationGFX = "GPU utilization (GFX)";
+    const char* m_nameUtilizationMEM = "GPU utilization (MEM)";
 };
 
 }

@@ -26,10 +26,10 @@ void check_rsmi_status(rsmi_status_t status) {
 
 GpuRocmSmi::GpuRocmSmi()
     : m_initialized ( false )
-    , m_metrics( 1 )
+    // , m_metrics( 1 )
     , m_lastTime( 0 )
 {
-    m_metrics[0].name = "GPU socket power (Watts)";
+    // m_metrics[0].name = "GPU socket power (Watts)";
     // m_metrics[0].value = 0;
 
     rsmi_status_t ret;
@@ -42,7 +42,7 @@ GpuRocmSmi::GpuRocmSmi()
     for (int i=0; i < numDevices; ++i) {
         ret = rsmi_dev_id_get(i, &devId);
         check_rsmi_status(ret);
-        fprintf(stdout, "Got ROCm device id: %d\n", (int)devId);
+        fprintf(stdout, "Found ROCm device id: %d\n", (int)devId);
 
         // constexpr size_t MAX_NAME_LEN = 128;
         // char name[MAX_NAME_LEN];
@@ -55,24 +55,21 @@ GpuRocmSmi::GpuRocmSmi()
         // }
         // fprintf(stdout, "Got ROCm device name: '%s'\n", name);
 
-        uint64_t socketPower;
-        // rsmi_status_t ret;
-        ret = rsmi_dev_current_socket_power_get(0, &socketPower);
-        check_rsmi_status(ret);
-        fprintf(stdout, "socket power: %d\n", (int)socketPower);
+        // uint64_t socketPower;
+        // // rsmi_status_t ret;
+        // ret = rsmi_dev_current_socket_power_get(0, &socketPower);
+        // check_rsmi_status(ret);
+        // fprintf(stdout, "socket power: %d\n", (int)socketPower);
     }
-    // ret = rsmi_shut_down();
 
 }
 
 GpuRocmSmi::~GpuRocmSmi()
 {
-    // rsmi_status_t ret;
-
-    for( auto& v : m_metrics )
-    {
-        // Do not release v.name, as it may be still needed
-    }
+    // for( auto& v : m_metrics )
+    // {
+    //     // Do not release v.name, as it may be still needed
+    // }
 
     fprintf(stdout, "destructor\n");
 
@@ -83,8 +80,27 @@ GpuRocmSmi::~GpuRocmSmi()
 void GpuRocmSmi::Tick()
 {
     if (!m_initialized) {
+        // GPU socket power plot.
         TracyLfqPrepare( QueueType::PlotConfig );
-        MemWrite( &item->plotConfig.name, (uint64_t)m_metrics[0].name );
+        MemWrite( &item->plotConfig.name, (uint64_t)m_nameSocketPower );
+        MemWrite( &item->plotConfig.type, (uint8_t)PlotFormatType::Number );
+        MemWrite( &item->plotConfig.step, (uint8_t)false );
+        MemWrite( &item->plotConfig.fill, (uint8_t)true );
+        MemWrite( &item->plotConfig.color, 0 );
+        TracyLfqCommit;
+
+        // GPU utilization (GFX) plot.
+        TracyLfqPrepare( QueueType::PlotConfig );
+        MemWrite( &item->plotConfig.name, (uint64_t)m_nameUtilizationGFX );
+        MemWrite( &item->plotConfig.type, (uint8_t)PlotFormatType::Number );
+        MemWrite( &item->plotConfig.step, (uint8_t)false );
+        MemWrite( &item->plotConfig.fill, (uint8_t)true );
+        MemWrite( &item->plotConfig.color, 0 );
+        TracyLfqCommit;
+
+        // GPU utilization (MEM) plot.
+        TracyLfqPrepare( QueueType::PlotConfig );
+        MemWrite( &item->plotConfig.name, (uint64_t)m_nameUtilizationMEM );
         MemWrite( &item->plotConfig.type, (uint8_t)PlotFormatType::Number );
         MemWrite( &item->plotConfig.step, (uint8_t)false );
         MemWrite( &item->plotConfig.fill, (uint8_t)true );
@@ -99,49 +115,39 @@ void GpuRocmSmi::Tick()
     {
         m_lastTime = t;
 
-        // fprintf(stdout, "Tick()\n");
-
-        // Tracy Syspower
-        //   ev.delta is Microjoule
-        //   power is Watt = J / s
-
-
-        // Units: microwatts
-        uint64_t socketPowerMicrowatts;
         rsmi_status_t ret;
+
+        // We could use the GPU timestamps (which could be backdated), if
+        // time domains are sufficiently overlapping.
+        int64_t profilerTime = Profiler::GetTime();
+
+        // GPU socket power plot.
+        uint64_t socketPowerMicrowatts;
         ret = rsmi_dev_current_socket_power_get(0, &socketPowerMicrowatts);
         check_rsmi_status(ret);
         uint64_t socketPowerWatts = socketPowerMicrowatts / 1000000;
-        // fprintf(stdout, "  socket power: %d\n", (int)socket_power);
-        // uint64_t delta;
-        // delta = socketPowerWatts - m_metrics[0].value;
-        // m_metrics[0].value = socketPowerWatts;
-        // fprintf(stdout, "socket power: %dW, delta: %dW\n", (int)socketPowerWatts, (int)delta);
-        fprintf(stdout, "socket power: %dW\n", (int)socketPowerWatts);
-
-        // uint64_t socketEnergyMicrojoules;
-        // float counterResolution;
-        // uint64_t timestamp;
-        // ret = rsmi_dev_energy_count_get(0, &socketEnergyMicrojoules, &counterResolution, &timestamp);
-        // check_rsmi_status(ret);
-        // uint64_t delta;
-        // delta = socketEnergyMicrojoules - m_metrics[0].value;
-        // m_metrics[0].value = socketEnergyMicrojoules;
-        // fprintf(stdout, "socket energy: %" PRIu64 "uJ, delta: %" PRIu64 "uJ, resolution: %f, timestamp: %" PRIu64 "\n", socketEnergyMicrojoules, delta, counterResolution, timestamp);
-
-        // TODO: rsmi_dev_power_cap_range_get()
-
-        // GPU:  28061126986666
-        // CPU:  21365180400
-        // TracyLfqPrepare( QueueType::SysPowerReport );
-        // MemWrite( &item->sysPower.time, timestamp );
-        // MemWrite( &item->sysPower.delta, delta );
-        // MemWrite( &item->sysPower.name, (uint64_t)m_metrics[0].name );
-
         TracyLfqPrepare( QueueType::PlotDataInt );
-        MemWrite( &item->plotDataInt.name, (uint64_t)m_metrics[0].name );
-        MemWrite( &item->plotDataInt.time, Profiler::GetTime() );
+        MemWrite( &item->plotDataInt.name, (uint64_t)(uint64_t)m_nameSocketPower );
+        MemWrite( &item->plotDataInt.time, profilerTime );
         MemWrite( &item->plotDataInt.val, socketPowerWatts );
+        TracyLfqCommit;
+
+        // GPU utilization plots.
+        uint64_t timestamp;
+        rsmi_utilization_counter_t utilizationCounters[2];
+        utilizationCounters[0].type = RSMI_COARSE_GRAIN_GFX_ACTIVITY;
+        utilizationCounters[1].type = RSMI_COARSE_GRAIN_MEM_ACTIVITY;
+        ret = rsmi_utilization_count_get(0, utilizationCounters, 2, &timestamp);
+        check_rsmi_status(ret);
+        TracyLfqPrepare( QueueType::PlotDataInt );
+        MemWrite( &item->plotDataInt.name, (uint64_t)(uint64_t)m_nameUtilizationGFX );
+        MemWrite( &item->plotDataInt.time, profilerTime );
+        MemWrite( &item->plotDataInt.val, utilizationCounters[0].value );
+        TracyLfqCommit;
+        TracyLfqPrepare( QueueType::PlotDataInt );
+        MemWrite( &item->plotDataInt.name, (uint64_t)(uint64_t)m_nameUtilizationMEM );
+        MemWrite( &item->plotDataInt.time, profilerTime );
+        MemWrite( &item->plotDataInt.val, utilizationCounters[1].value );
         TracyLfqCommit;
     }
 }
