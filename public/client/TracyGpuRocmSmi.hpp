@@ -18,11 +18,9 @@ namespace tracy
 
 class GpuRocmSmi
 {
-    struct Domain
+    struct Metric
     {
         uint64_t value;
-        uint64_t overflow;
-        FILE* handle;
         const char* name;
     };
 
@@ -33,9 +31,7 @@ public:
     void Tick();
 
 private:
-    void ScanDirectory( const char* path, int parent );
-
-    FastVector<Domain> m_domains;
+    FastVector<Metric> m_metrics;
     uint64_t m_lastTime;
 };
 
