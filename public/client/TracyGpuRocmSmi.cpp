@@ -31,19 +31,19 @@ GpuRocmSmi::GpuRocmSmi()
     // TODO: initialize
 
     m_metrics[0].name = "GPU socket power";
-    m_metrics[0].value = 0;
+    // m_metrics[0].value = 0;
 
     rsmi_status_t ret;
-    uint32_t num_devices;
-    uint16_t dev_id;
+    uint32_t numDevices;
+    uint16_t devId;
 
     ret = rsmi_init(0);
-    ret = rsmi_num_monitor_devices(&num_devices);
+    ret = rsmi_num_monitor_devices(&numDevices);
 
-    for (int i=0; i < num_devices; ++i) {
-        ret = rsmi_dev_id_get(i, &dev_id);
+    for (int i=0; i < numDevices; ++i) {
+        ret = rsmi_dev_id_get(i, &devId);
         check_rsmi_status(ret);
-        fprintf(stdout, "Got ROCm device id: %d\n", (int)dev_id);
+        fprintf(stdout, "Got ROCm device id: %d\n", (int)devId);
 
         // constexpr size_t MAX_NAME_LEN = 128;
         // char name[MAX_NAME_LEN];
@@ -56,11 +56,11 @@ GpuRocmSmi::GpuRocmSmi()
         // }
         // fprintf(stdout, "Got ROCm device name: '%s'\n", name);
 
-        uint64_t socket_power;
+        uint64_t socketPower;
         // rsmi_status_t ret;
-        ret = rsmi_dev_current_socket_power_get(0, &socket_power);
+        ret = rsmi_dev_current_socket_power_get(0, &socketPower);
         check_rsmi_status(ret);
-        fprintf(stdout, "socket power: %d\n", (int)socket_power);
+        fprintf(stdout, "socket power: %d\n", (int)socketPower);
     }
     // ret = rsmi_shut_down();
 }
@@ -95,27 +95,27 @@ void GpuRocmSmi::Tick()
 
 
         // Units: microwatts
-        uint64_t socket_power_microwatts;
+        uint64_t socketPowerMicrowatts;
         rsmi_status_t ret;
-        ret = rsmi_dev_current_socket_power_get(0, &socket_power_microwatts);
+        ret = rsmi_dev_current_socket_power_get(0, &socketPowerMicrowatts);
         check_rsmi_status(ret);
-        uint64_t socket_power_watts = socket_power_microwatts / 1000000;
+        uint64_t socketPowerWatts = socketPowerMicrowatts / 1000000;
         // fprintf(stdout, "  socket power: %d\n", (int)socket_power);
         // uint64_t delta;
-        // delta = socket_power_watts - m_metrics[0].value;
-        // m_metrics[0].value = socket_power_watts;
-        // fprintf(stdout, "socket power: %dW, delta: %dW\n", (int)socket_power_watts, (int)delta);
-        fprintf(stdout, "socket power: %dW\n", (int)socket_power_watts);
+        // delta = socketPowerWatts - m_metrics[0].value;
+        // m_metrics[0].value = socketPowerWatts;
+        // fprintf(stdout, "socket power: %dW, delta: %dW\n", (int)socketPowerWatts, (int)delta);
+        fprintf(stdout, "socket power: %dW\n", (int)socketPowerWatts);
 
-        uint64_t socket_energy_microjoules;
-        float counter_resolution;
-        uint64_t timestamp;
-        ret = rsmi_dev_energy_count_get(0, &socket_energy_microjoules, &counter_resolution, &timestamp);
-        check_rsmi_status(ret);
-        uint64_t delta;
-        delta = socket_energy_microjoules - m_metrics[0].value;
-        m_metrics[0].value = socket_energy_microjoules;
-        fprintf(stdout, "socket energy: %" PRIu64 "uJ, delta: %" PRIu64 "uJ, resolution: %f, timestamp: %" PRIu64 "\n", socket_energy_microjoules, delta, counter_resolution, timestamp);
+        // uint64_t socketEnergyMicrojoules;
+        // float counterResolution;
+        // uint64_t timestamp;
+        // ret = rsmi_dev_energy_count_get(0, &socketEnergyMicrojoules, &counterResolution, &timestamp);
+        // check_rsmi_status(ret);
+        // uint64_t delta;
+        // delta = socketEnergyMicrojoules - m_metrics[0].value;
+        // m_metrics[0].value = socketEnergyMicrojoules;
+        // fprintf(stdout, "socket energy: %" PRIu64 "uJ, delta: %" PRIu64 "uJ, resolution: %f, timestamp: %" PRIu64 "\n", socketEnergyMicrojoules, delta, counterResolution, timestamp);
 
         // TODO: rsmi_dev_power_cap_range_get()
 
